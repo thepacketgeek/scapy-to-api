@@ -49,11 +49,11 @@ def uploadPacket(a):
 		 	L7protocol = 'ARP'
 		 	payload = cleanPayload(a[0].show)
 		# else if a.haslayer(CDP):
-		# 	#dostuff
+		 	#coming soon
 		#else if a.haslayer(DHCP):
-		# 	#dostuff
+		 	#coming soon
 		# else if a.haslayer(DHCPv6):
-		# 	#dostuff
+		 	#coming soon
 		elif (a.haslayer(IP) or a.haslayer(IPv6)):
 			l4 = a.summary().split("/")[2].strip().split(" ")[0]
 			srcIP = a[0][l3].src
@@ -83,7 +83,6 @@ def uploadPacket(a):
 			srcIP = "<unknown>"
 			dstIP = "<unknown>"
 			payload = cleanPayload(a[0].show)
-			
 
 		packet = {'owner': userToken,\
 				"timestamp": str(datetime.now())[:-2],\
