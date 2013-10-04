@@ -25,7 +25,8 @@ def uploadPacket(a):
 	try:
 		l2 = a.summary().split("/")[0].strip()
 		l3 = a.summary().split("/")[1].strip()
-		srcIP, dstIP, L7protocol, size, ttl, srcMAC, dstMAC, L4protocol, srcPort, dstPort, payload = "---","---","---","---","---","---","---","---","---","---","---"
+		srcIP, dstIP, L7protocol, size, ttl, srcMAC, dstMAC, L4protocol, srcPort, dstPort, payload =\
+			"---","---","---","---","---","---","---","---","---","---","---"
 		payload = cleanPayload(a[0].show)
 		if a.haslayer(Ether):
 			srcMAC = a[0][0].src
@@ -49,11 +50,11 @@ def uploadPacket(a):
 		 	L7protocol = 'ARP'
 		 	payload = cleanPayload(a[0].show)
 		# else if a.haslayer(CDP):
-		 	#coming soon
+			# coming soon
 		#else if a.haslayer(DHCP):
-		 	#coming soon
+			# coming soon
 		# else if a.haslayer(DHCPv6):
-		 	#coming soon
+			# coming soon
 		elif (a.haslayer(IP) or a.haslayer(IPv6)):
 			l4 = a.summary().split("/")[2].strip().split(" ")[0]
 			srcIP = a[0][l3].src
@@ -72,10 +73,12 @@ def uploadPacket(a):
 				srcPort = a[0][l4].sport
 				dstPort = a[0][l4].dport
 				L7protocol = a.summary().split("/")[2].strip().split(" ")[0]
+				L4protocol = a.summary().split("/")[2].strip().split(" ")[0]
 			elif a.haslayer(UDP):
 				srcPort = a[0][l4].sport
 				dstPort = a[0][l4].dport
 				L7protocol = a.summary().split("/")[2].strip().split(" ")[0]
+				L4protocol = a.summary().split("/")[2].strip().split(" ")[0]
 		else:
 			srcMAC = "<unknown>"
 			dstMAC = "<unknown>"
@@ -83,6 +86,7 @@ def uploadPacket(a):
 			srcIP = "<unknown>"
 			dstIP = "<unknown>"
 			payload = cleanPayload(a[0].show)
+			
 
 		packet = {'owner': userToken,\
 				"timestamp": str(datetime.now())[:-2],\
@@ -105,10 +109,10 @@ def uploadPacket(a):
 	try: 	
 		r = requests.post(url, data=json.dumps(packet), headers=headers)
 	except:
-		packet['payload'] = "<unavailable>"
+		packet["payload"] = "<unavailable>"
 		r = requests.post(url, data=json.dumps(packet), headers=headers)
 
 	return "Packet Uploaded:", str(packet["timestamp"]), ";", str(packet["srcIP"]), "==>", str(packet["dstIP"])
 	
 # Start sniffing some packets
-sniff(iface="en3", filter=filter, prn=uploadPacket, count=count)
+sniff(filter=filter, prn=uploadPacket, count=count)
