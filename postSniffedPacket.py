@@ -9,4 +9,4 @@ filter = ""
 count = 10      # 0 == unlimited
 
 # Start sniffing some packets
-sniff(filter=filter, prn=uploadPacket(APIoptions), count=count)
+sniff(filter=filter, prn=uploadPacket(APIoptions), count=count, store=0)
