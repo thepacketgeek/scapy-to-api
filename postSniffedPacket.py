@@ -17,13 +17,14 @@ else:
 	count = 0
 	print "Using default packet count of 0 (indefinite). Ctrl + C to stop sending packets."
 
+if args.filter:
+	filter = args.filter
+else: 
+	filter = ""
+
 ## define POST parameters
 url = "http://localhost:3000/api/packets"
 userToken = ""
 
-# Define optional sniff and packet count
-filter = ""
-count = 10      # 0 == unlimited
-
 # Start sniffing some packets
-sniff(filter=filter, prn=uploadPacket(APIoptions), count=count, store=0)
+sniff(filter=filter, prn=uploadPacket(url, userToken), count=count, store=0)
