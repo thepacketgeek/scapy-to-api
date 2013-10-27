@@ -4,7 +4,9 @@ This is a script and module that can run on a computer with the Installation Dep
 
 ##Usage
 
-Currently both .py files need to be in the same folder but I'm working on an installer so the `meteorshark.py` is available for import globally. You only need to make changes in the `postSniffedPacket.py` script, or copy the script and put it into your own file. 
+Currently both .py files need to be in the same folder but I'm working on an installer so the `meteorshark.py` is available for import globally. You only need to add the 'url' and 'userToken' changes in the `postSniffedPacket.py` script, or copy the script and put it into your own file. 
+
+
 
 ### Sniffing Packets
 
@@ -14,7 +16,8 @@ Running the `postSniffedPacket.py` with the options object filled out will use s
 
 You will obviously want to push these packets to some sort of API, otherwise you wouldn't be reading this right now.  To edit the API endpoint, edit these variables towards the top of the script:
 
-`APIoptions = {"url": "http://localhost:3000/api/packets", "token": "userTokenFromMeteorshark"};`
+url = "http://localhost:3000/api/packets"
+userToken = "C0mpl3t1yR@nd0m"
 
 My current API, [Meteorshark](https://www.github.com/thepacketgeek/meteorshark "Meteorshark"), uses a Token instead of authentication right now.  If you need authentication support, feel free to make a pull request as I would love to have that in here as an option!
 
@@ -48,17 +51,13 @@ JSON properties are as follows:
 
 Packets can be filtered by scapy while sniffing to limit the amount of packets being sent to the API/DB. Scapy uses the [BPF syntax](http://biot.com/capstats/bpf.html "BPF Syntax") which is also used for Wireshark capture filters. The total number of packets to send can also be configured with the `count` variable.
 
-<pre><code># Define optional sniff and packet count
-filter = ""
-count = 0      # 0 == unlimited
-</code></pre>
-
-To add a filter, simply edit the script and enter your filter as a string for the `filter` variable.
+To add a filter and/or packet count, simply use the CLI '--filter' and '--count' options and enter your values.
 
 Examples:
 
-- `filter="tcp port 80"`
-- `filter="host 192.168.200.0/24"`
+- `python postSniffedPacket.py --filter="tcp port 80"`
+- `python postSniffedPacket.py --filter="host 192.168.200.0/24" --count 10`
+- `python postSniffedPacket.py --count 10`
 
 ## Installation Dependencies
 
