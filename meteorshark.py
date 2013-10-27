@@ -10,7 +10,7 @@ def cleanPayload(p):
 		.strip('bound method Ether.show of ').replace('>','').replace('[<','[')\
 		.replace('\n<','<').replace('<','\n')
 
-def uploadPacket(url, token):
+def uploadPacket(url, userToken):
 
 	def parseAndPost(rawPacket):
 		# If we can't parse the packet, we don't want to end the sniffing.
@@ -80,7 +80,7 @@ def uploadPacket(url, token):
 				dstIP = "<unknown>"
 				payload = cleanPayload(rawPacket[0].show)
 				
-			packet = {'owner': token,\
+			packet = {'owner': userToken,\
 					"timestamp": str(datetime.now())[:-2],\
 					"srcIP": srcIP,\
 					"dstIP": dstIP,\
