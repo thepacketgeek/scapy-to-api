@@ -55,9 +55,9 @@ To add a filter and/or packet count, simply use the CLI '--filter' and '--count'
 
 Examples:
 
-- `python postSniffedPacket.py --filter="tcp port 80"`
-- `python postSniffedPacket.py --filter="host 192.168.200.0/24" --count 10`
-- `python postSniffedPacket.py --count 10`
+- `$ python postSniffedPacket.py --filter="tcp port 80"`
+- `$ python postSniffedPacket.py --filter="host 192.168.200.0/24" --count 10`
+- `$ python postSniffedPacket.py --count 10`
 
 ## Installation Dependencies
 
