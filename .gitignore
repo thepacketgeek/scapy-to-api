@@ -1,2 +1,4 @@
-testfiles/*
 *.pyc
+bin/**
+lib/**
+share/**

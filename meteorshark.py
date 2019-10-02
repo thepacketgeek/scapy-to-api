@@ -1,112 +1,165 @@
-from scapy.all import *
-import requests
+#!/usr/bin/env python3
+
+""" Library for integrating with Meteorshark
+    https://github.com/thepacketgeek/meteorshark
+"""
 import json
 from datetime import datetime
+from typing import Any, Dict, NamedTuple, Optional, Tuple
 
-def cleanPayload(p):
-	p = str(p)
-	# Clean up packet payload from scapy output
-	return p.split('Raw')[0].split("Padding")[0].replace('|','\n').strip('<')\
-		.strip('bound method Ether.show of ').replace('>','').replace('[<','[')\
-		.replace('\n<','<').replace('<','\n')
+import requests
+from scapy.all import (
+    ARP,
+    ByteField,
+    Ether,
+    Dot1Q,
+    STP,
+    Dot3,
+    IP,
+    IPv6,
+    ICMP,
+    TCP,
+    UDP,
+    Packet,
+)
 
-def uploadPacket(url, userToken):
 
-	def parseAndPost(rawPacket):
-		# If we can't parse the packet, we don't want to end the sniffing.
-		# Packet will be printed out to the console if there's an error for debugging
-		try:
-			l2 = rawPacket.summary().split("/")[0].strip()
-			l3 = rawPacket.summary().split("/")[1].strip()
-			srcIP, dstIP, L7protocol, size, ttl, srcMAC, dstMAC, L4protocol, srcPort, dstPort, payload =\
-				"---","---","---","---","---","---","---","---","---","---","---"
-			payload = cleanPayload(rawPacket[0].show)
-			if rawPacket.haslayer(Ether):
-				srcMAC = rawPacket[0][0].src
-				dstMAC = rawPacket[0][0].dst
-			elif rawPacket.haslayer(Dot3):
-				srcMAC = rawPacket[0][0].src
-			 	srcIP = rawPacket[0][0].src
-			 	dstMAC = rawPacket[0][0].dst
-			 	dstIP = rawPacket[0][0].dst
-			 	if rawPacket.haslayer(STP):
-			 		L7protocol = 'STP'
-				 	payload = cleanPayload(rawPacket[STP].show)
-			if rawPacket.haslayer(Dot1Q):
-				l3 = rawPacket.summary().split("/")[2].strip()
-				l4 = rawPacket.summary().split("/")[3].strip().split(" ")[0]
-			if rawPacket.haslayer(ARP):
-			 	srcMAC = rawPacket[0][0].src
-			 	srcIP = rawPacket[0][0].src
-			 	dstMAC = rawPacket[0][0].dst
-			 	dstIP = rawPacket[0][0].dst
-			 	L7protocol = 'ARP'
-			 	payload = cleanPayload(rawPacket[0].show)
-			# else if rawPacket.haslayer(CDP):
-			# 	#dostuff
-			#else if rawPacket.haslayer(DHCP):
-			# 	#dostuff
-			# else if rawPacket.haslayer(DHCPv6):
-			# 	#dostuff
-			elif (rawPacket.haslayer(IP) or rawPacket.haslayer(IPv6)):
-				l4 = rawPacket.summary().split("/")[2].strip().split(" ")[0]
-				srcIP = rawPacket[0][l3].src
-				dstIP = rawPacket[0][l3].dst
-				if l3 == 'IP':
-					size = rawPacket[0][l3].len
-					ttl = rawPacket[0][l3].ttl
-				elif l3 == 'IPv6':
-					size = rawPacket[0][l3].plen
-					ttl = rawPacket[0][l3].hlim
-				L7protocol = rawPacket.lastlayer().summary().split(" ")[0].strip()
-				if rawPacket.haslayer(ICMP):
-					L7protocol = rawPacket.summary().split("/")[2].strip().split(" ")[0]
-					payload = rawPacket[ICMP].summary().split("/")[0][5:]
-				if rawPacket.haslayer(TCP):
-					srcPort = rawPacket[0][l4].sport
-					dstPort = rawPacket[0][l4].dport
-					L7protocol = rawPacket.summary().split("/")[2].strip().split(" ")[0]
-					L4protocol = rawPacket.summary().split("/")[2].strip().split(" ")[0]
-				elif rawPacket.haslayer(UDP):
-					srcPort = rawPacket[0][l4].sport
-					dstPort = rawPacket[0][l4].dport
-					L7protocol = rawPacket.summary().split("/")[2].strip().split(" ")[0]
-					L4protocol = rawPacket.summary().split("/")[2].strip().split(" ")[0]
-			else:
-				srcMAC = "<unknown>"
-				dstMAC = "<unknown>"
-				l4 = "<unknown>"
-				srcIP = "<unknown>"
-				dstIP = "<unknown>"
-				payload = cleanPayload(rawPacket[0].show)
-				
-			packet = {'owner': userToken,\
-					"timestamp": str(datetime.now())[:-2],\
-					"srcIP": srcIP,\
-					"dstIP": dstIP,\
-					"L7protocol": L7protocol,\
-					"size": size,\
-					"ttl": ttl,\
-					"srcMAC": srcMAC,\
-					"dstMAC": dstMAC,\
-					"L4protocol": L4protocol,\
-					"srcPort": srcPort,\
-					"dstPort": dstPort,\
-					"payload": cleanPayload(rawPacket[0].show)\
-					}
-			# define headers for API POST
-			headers = {'content-type': 'application/json'}
-			# attempt to jsonify the packet and send to API, if can't jsonify the packet, re-write the payload(this is where json issues would exist)
-			try: 	
-				r = requests.post(url, data=json.dumps(packet), headers=headers)
-			except:
-				print "Can't JSONify, POSTing empty payload"
-				packet["payload"] = "<unavailable>"
-				r = requests.post(url, data=json.dumps(packet), headers=headers)
-			return "Packet Uploaded: " + str(packet["timestamp"]) + " ; " + str(packet["srcIP"]) + " ==> " + str(packet["dstIP"] + "; " + str(packet["L4protocol"]))
-		except:
-			# Debug: if packet error, print out the packet to see what failed
-			print cleanPayload(rawPacket[0].show)
-			return "Packet Issue, review packet printout for problem"
-	
-	return parseAndPost
+class ParsedPacket(NamedTuple):
+    """ Temporary representation of a parsed packet ready to be sent
+        to Meteorshark
+    """
+
+    timestamp: int
+    size: int
+    src_ip: Optional[str] = None
+    dst_ip: Optional[str] = None
+    ttl: Optional[int] = None
+    src_mac: Optional[str] = None
+    dst_mac: Optional[str] = None
+    app_protocol: Optional[
+        str
+    ] = None  # The highest level protocol included in the packet
+    transport_protocol: Optional[str] = None
+    src_port: Optional[int] = None
+    dst_port: Optional[int] = None
+    payload: Optional[str] = None
+
+    def to_api(self) -> Dict[str, Any]:
+        """ Prepare packet for JSON formatting """
+        return {
+            "timestamp": self.timestamp,
+            "srcIP": self.src_ip,
+            "dstIP": self.dst_ip,
+            "L7protocol": self.app_protocol,
+            "size": self.size,
+            "ttl": self.ttl,
+            "srcMAC": self.src_mac,
+            "dstMAC": self.dst_mac,
+            "L4protocol": self.transport_protocol,
+            "srcPort": self.src_port,
+            "dstPort": self.dst_port,
+            "payload": self.payload,
+        }
+
+
+def clean_payload(pkt: Packet) -> str:
+    """ Clean up packet payload from Scapy output
+
+    """
+    return pkt.layers()[-1].summary()
+
+
+def get_ips(pkt: Packet) -> Tuple[Optional[str], Optional[str]]:
+    if pkt.haslayer(ARP):
+        return (pkt[ARP].psrc, pkt[ARP].pdst)
+
+    if pkt.haslayer(IP):
+        return (pkt[IP].src, pkt[IP].dst)
+    if pkt.haslayer(IPv6):
+        return (pkt[IPv6].src, pkt[IPv6].dst)
+
+    return (None, None)
+
+
+def get_macs(pkt: Packet) -> Tuple[Optional[str], Optional[str]]:
+    if pkt.haslayer(Ether):
+        return (pkt[Ether].src, pkt[Ether].dst)
+    return (None, None)
+
+
+def get_ports(pkt: Packet) -> Tuple[Optional[str], Optional[str]]:
+    if pkt.haslayer(TCP):
+        return (pkt[TCP].sport, pkt[TCP].dport)
+    if pkt.haslayer(UDP):
+        return (pkt[UDP].sport, pkt[UDP].dport)
+    return (None, None)
+
+
+def get_transport_protocol(pkt: Packet) -> Optional[str]:
+    pass
+
+
+def get_app_protocol(pkt: Packet) -> Optional[str]:
+    if pkt.haslayer(ARP):
+        return "ARP"
+    if pkt.haslayer(ICMP):
+        return "ICMP"
+    else:
+        for layer in reversed(pkt.layers()):
+            name = layer.__name__
+            if name != "Raw":
+                return name
+    return pkt.lastlayer().__name__
+
+
+def get_payload(pkt: Packet) -> Optional[str]:
+    """ Get the payload of the packet as a string """
+    return f"{pkt.payload!r}"
+
+
+def get_size(pkt: Packet) -> int:
+    return len(pkt)
+
+
+def get_ttl(pkt: Packet) -> Optional[int]:
+    if IP in pkt:
+        return pkt.ttl
+
+    if IPv6 in pkt:
+        return pkt.hlim
+
+    for layer in reversed(pkt.layers()):
+        ttl = getattr(pkt[layer.__name__], "ttl", None)
+        if ttl:
+            return ttl
+
+
+def parse_packet(pkt: Packet) -> ParsedPacket:
+    src_ip, dst_ip = get_ips(pkt)
+    src_mac, dst_mac = get_macs(pkt)
+    src_port, dst_port = get_ports(pkt)
+
+    return ParsedPacket(
+        timestamp=int(datetime.now().timestamp()),
+        src_ip=src_ip,
+        dst_ip=dst_ip,
+        app_protocol=get_app_protocol(pkt),
+        size=get_size(pkt),
+        ttl=get_ttl(pkt),
+        src_mac=src_mac,
+        dst_mac=dst_mac,
+        transport_protocol=get_transport_protocol(pkt),
+        src_port=src_port,
+        dst_port=dst_port,
+        payload=get_payload(pkt),
+    )
+
+
+def upload_packet(url: str, token: str, packet: ParsedPacket):
+    """ Get the Packet JSON and upload in a POST request to Meteorshark """
+    headers = {"content-type": "application/json"}
+    packet_data = packet.to_api()
+    packet_data["owner"] = token
+    headers = {"content-type": "application/json"}
+    requests.post(url, data=json.dumps(packet_data), headers=headers)
+

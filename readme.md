@@ -4,20 +4,19 @@ This is a script and module that can run on a computer with the Installation Dep
 
 ##Usage
 
-Currently both .py files need to be in the same folder but I'm working on an installer so the `meteorshark.py` is available for import globally. You only need to add the 'url' and 'userToken' changes in the `postSniffedPacket.py` script, or copy the script and put it into your own file. 
+Currently both .py files need to be in the same folder but I'm working on an installer so the `meteorshark.py` is available for import globally. You only need to add the 'url' and 'userToken' changes in the `sniff_packets.py` script, or copy the script and put it into your own file. 
 
 
 
 ### Sniffing Packets
 
-Running the `postSniffedPacket.py` with the options object filled out will use scapy to sniff packets (may require root permissions on your system), sending each packet to the meteorshark.uploadPacket() function where they will be parsed and made into a JSON for DB insertion.
+Running the `sniff_packets.py` with the options object filled out will use scapy to sniff packets (may require root permissions on your system), sending each packet to the meteorshark.uploadPacket() function where they will be parsed and made into a JSON for DB insertion.
 
 ### Configuring the API endpoint
 
 You will obviously want to push these packets to some sort of API, otherwise you wouldn't be reading this right now.  To edit the API endpoint, edit these variables towards the top of the script:
 
 url = "http://localhost:3000/api/packets"
-userToken = "C0mpl3t1yR@nd0m"
 
 My current API, [Meteorshark](https://www.github.com/thepacketgeek/meteorshark "Meteorshark"), uses a Token instead of authentication right now.  If you need authentication support, feel free to make a pull request as I would love to have that in here as an option!
 
@@ -55,9 +54,10 @@ To add a filter and/or packet count, simply use the CLI '--filter' and '--count'
 
 Examples:
 
-- `$ python postSniffedPacket.py --filter="tcp port 80"`
-- `$ python postSniffedPacket.py --filter="host 192.168.200.0/24" --count 10`
-- `$ python postSniffedPacket.py --count 10`
+- `$ python sniff_packets.py [token] --filter="tcp port 80"`
+- `$ python sniff_packets.py [token] --filter="host 192.168.200.0/24" --count 10`
+- `$ python sniff_packets.py [token] --count 10`
+
 
 ## Installation Dependencies
 
