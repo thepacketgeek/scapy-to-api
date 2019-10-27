@@ -54,13 +54,13 @@ To add a filter and/or packet count, simply use the CLI '--filter' and '--count'
 
 Examples:
 
-- `$ python sniff_packets.py [token] --filter="tcp port 80"`
-- `$ python sniff_packets.py [token] --filter="host 192.168.200.0/24" --count 10`
-- `$ python sniff_packets.py [token] --count 10`
+- `$ python3 sniff_packets.py [token] --filter="tcp port 80"`
+- `$ python3 sniff_packets.py [token] --filter="host 192.168.200.0/24" --count 10`
+- `$ python3 sniff_packets.py [token] --count 10`
 
 
 ## Installation Dependencies
 
-* [Python 2.7.5+](http://python.org/download/releases/2.7.5/ "Python 2.7.5")
-* [Scapy 2.2.0+](http://www.secdev.org/projects/scapy/ "Scapy 2.2.0")
-* [Requests 2.0.0+](http://docs.python-requests.org/en/latest/user/install/ "Requests")
+* [Python 3.5+](https://www.python.org/downloads/ "Python Downloads")
+* [Scapy 2.4.3+](https://scapy.net/download/ "Scapy Downloads")
+* [Requests 2.22.0+](http://docs.python-requests.org/en/latest/user/install/ "Requests")
